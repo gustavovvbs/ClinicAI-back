@@ -49,7 +49,7 @@ class SearchService:
             filtered_study["StartDate"] = start_date
 
             completion_date_struct = identification_module.get("completionDateStruct", {})
-            filtered_study["endDate"] = end_date
+            filtered_study["endDate"] = completion_date_struct
 
             keywords = conditions_module.get("keywords", []) or ["N/A"]
             filtered_study["Keywords"] = keywords
