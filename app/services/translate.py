@@ -24,7 +24,7 @@ class TranslateService:
         def collect_strings(d, path=[]):
             if isinstance(d, dict):
                 for k, v in d.items():
-                    if k not in ['Location', 'Contacts']:
+                    if k in ["Title", "Description", "Keywords"]:
                         collect_strings(v, path + [k])
             elif isinstance(d, list):
                 for idx, item in enumerate(d):
