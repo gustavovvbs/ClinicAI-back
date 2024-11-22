@@ -24,6 +24,7 @@ class SearchService:
             contacts_locations_module = protocol_section.get("contactsLocationsModule", {})
             conditions_module = protocol_section.get("conditionsModule", {})
             eligibility_module = protocol_section.get("eligibilityModule", {})
+            status_module = protocol_section.get("statusModule", {})
 
             title = identification_module.get("briefTitle") or identification_module.get("officialTitle") or "N/A"
             filtered_study["Title"] = title
@@ -35,16 +36,64 @@ class SearchService:
 
             interventions = arms_interventions_module.get("interventions", [])
             intervention_names = [interv.get("name", "N/A") for interv in interventions] or ["N/A"]
+            intervention_descriptions = [interv.get("description", "N/A") for interv in interventions] or ["N/A"]
             filtered_study["Intervention"] = intervention_names
 
             sponsor = sponsors_collaborators_module.get("leadSponsor", {}).get("name", "N/A")
             filtered_study["Sponsor"] = sponsor
+
+            organization = identification_module.get("organization", "N/A")
+            filtered_study["Organization"] = organization
+
+            start_date = identification_module.get("startDateStruct", {}).get("date", "N/A")
+            filtered_study["StartDate"] = start_date
+
+            completion_date_struct = identification_module.get("completionDateStruct", {})
+            filtered_study["endDate"] = end_date
 
             keywords = conditions_module.get("keywords", []) or ["N/A"]
             filtered_study["Keywords"] = keywords
 
             contacts = contacts_locations_module.get("centralContacts", []) or ["N/A"]
             filtered_study["Contacts"] = contacts
+
+            study_type = identification_module.get("studyType", "N/A")
+            filtered_study["StudyType"] = study_type
+
+            study_phase = identification_module.get("phases", "N/A")
+            filtered_study["Phase"] = study_phase
+
+            healthy_volunteers = eligibility_module.get("healthyVolunteers", "N/A")
+            filtered_study["HealhyVolunteers"] = healthy_volunteers
+
+            sex = eligibility_module.get("sex", "N/A")
+            filtered_study["Sex"] = sex 
+
+            minimum_age = eligibility_module.get("minimumAge", "N/A")
+            maximum_age = eligibility_module.get("maximumAge", "N/A")
+            filtered_study["MinimumAge"] = minimum_age
+            filtered_study["MaximumAge"] = maximum_age
+
+            organization = protocol_section.get("organization", "N/A")
+            organization_name = organization.get("fullName", "N/A")
+            filtered_study["Organization"] = organization_name
+            filtered_study["FunderType"] = organization.get("class", "N/A")
+
+            study_start_date = status_module.get("startDateStruct", "N/A")
+            filtered_study["StartDate"] = study_start_date
+
+            primary_completion_date = status_module.get("primaryCompletionDateStruct", "N/A")
+            filtered_study["PrimaryCompletionDate"] = primary_completion_date
+
+            study_first_submission_date = status_module.get("studyFirstSubmitDate", "N/A")
+            filtered_study["FirstSubmissionDate"] = study_first_submission_date
+
+            study_first_post_date = status_module.get("studyFirstPostDateStruct", "N/A")
+            filtered_study["FirstPostDate"] = study_first_post_date
+
+            last_update_post_date = status_module.get("lastUpdatePostDateStruct", "N/A")
+            filtered_study["LastUpdatePostDate"] = last_update_post_date
+
 
             locations = contacts_locations_module.get("locations", [])
             location_info = []
