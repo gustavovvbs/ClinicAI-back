@@ -43,7 +43,10 @@ class SearchService:
             filtered_study["Sponsor"] = sponsor
 
             organization = identification_module.get("organization", "N/A")
-            filtered_study["Organization"] = organization
+            organization_name = filtered_study.get("fullName", "N/A")
+            funder_type = organization.get("class", "N/A")
+            filtered_study["FunderType"] = funder_type
+            filtered_study["Organization"] = organization_name
 
             start_date = identification_module.get("startDateStruct", {}).get("date", "N/A")
             filtered_study["StartDate"] = start_date
@@ -73,11 +76,6 @@ class SearchService:
             maximum_age = eligibility_module.get("maximumAge", "N/A")
             filtered_study["MinimumAge"] = minimum_age
             filtered_study["MaximumAge"] = maximum_age
-
-            organization = protocol_section.get("organization", "N/A")
-            organization_name = organization.get("fullName", "N/A")
-            filtered_study["Organization"] = organization_name
-            filtered_study["FunderType"] = organization.get("class", "N/A")
 
             study_start_date = status_module.get("startDateStruct", "N/A")
             filtered_study["StartDate"] = study_start_date
