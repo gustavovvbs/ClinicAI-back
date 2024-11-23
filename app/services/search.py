@@ -34,6 +34,20 @@ class SearchService:
             full_description = "\n\n".join(filter(None, [brief_summary, detailed_description])).strip() or "N/A"
             filtered_study["Description"] = full_description
 
+            interventions = []
+            intervention_names = []
+            for i in range(len(arms_interventions_module.keys())):
+                intervention = {}
+                name = arms_interventions_module["interventions"][i].get("name", "N/A")
+                intervention_names.append(name)
+                intervention["description"] = arms_interventions_module["armGroups"][i].get("description", "N/A")
+                intervention["label"] = arms_interventions_module["armGroups"][i].get("label", "N/A")
+                intervention["explanation"] = arms_interventions_module["interventions"][i].get("description", "N/A")
+                intervention["interventionType"] = arms_interventions_module["armGroups"][i].get("interventionType", "N/A")
+                interventions.append(intervention)
+            filtered_study["InterventionNames"] = intervention_names
+            filtered_study["Interventions"] = interventions
+
             interventions = arms_interventions_module.get("interventions", [])
             intervention_names = [interv.get("name", "N/A") for interv in interventions] or ["N/A"]
             intervention_descriptions = [interv.get("description", "N/A") for interv in interventions] or ["N/A"]
@@ -190,6 +204,8 @@ class SearchService:
             current_page += 1
 
         return []
+
+        
 
     def filter_by_location(self, studies: List[Dict[str, Any]], location: str) -> List[Dict[str, Any]]:
         filter_city = location.split(",")[0].strip().lower()
