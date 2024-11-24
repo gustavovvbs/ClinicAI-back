@@ -4,6 +4,7 @@ from operator import itemgetter
 from dotenv import load_dotenv
 from google.cloud import translate_v2 as translate 
 from google.oauth2 import service_account
+from flask import current_app
 
 load_dotenv()
 
@@ -54,9 +55,11 @@ class TranslateService:
             result = self.translator.translate(strings_to_translate, target_language=target_language)
             translated_texts = [item['translatedText'] for item in result]
         except Exception as e:
-            current_app.logger.error(f"error during translation: {e}")
+            current_app.logger.error(f"Error translating text: {e}")
             return data
+            
 
+        #keeps going through the depth of the nested structure and replace the deepest value(str, the base case of the recursive function) with the translated text
         for translated_text, path in zip(translated_texts, paths):
             d = data
             for p in path[:-1]:

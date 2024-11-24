@@ -154,7 +154,6 @@ class SearchService:
     def search_paciente(
         self,
         search_data: PacienteSearch,
-        fields: Optional[List[str]] = None,
         page_size: int = 3,
         page: int = 1
     ) -> List[Dict[str, Any]]:
@@ -169,30 +168,33 @@ class SearchService:
         Returns:
             list: The filtered results from the target page, or an empty list if there are no results for the query.
         """
+        AGE_MAPPING = {
+            "child": ("0 years", "17 years"),
+            "adult": ("18 years", "64 years"),
+            "senior": ("65 years", "200 years")
+        }
         search_url = self.BASE_URL
         params = {
             "format": "json",
             "pageSize": page_size
         }
 
-        data_dict = search_data.dict(exclude_none=True, exclude_unset=True, by_alias=True)
-        current_app.logger.info(f"Search data: {data_dict}")
+        data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
 
-        if 'age' in data_dict and data_dict['age']:
-            age_value = data_dict.pop('age')
-            age_expr = f"AREA[MinimumAge]RANGE[MIN, {age_value}] AND AREA[MaximumAge]RANGE[{age_value}, MAX]"
-            params['filter.advanced'] = age_expr
+        if any(key in data_dict for key in ['age']):
+            if data_dict["age"] in AGE_MAPPING:
+                age_value = data_dict.pop('age')
+                age_range = AGE_MAPPING[age_value]
+                age_expr = f"AREA[MaximumAge]RANGE[{age_range[0]}, {age_range[1]}]"
+                params['filter.advanced'] = age_expr
 
+    
         for key, value in data_dict.items():
+            alias = search_data.model_fields[key].alias
             if isinstance(value, list):
-                params[key] = ",".join(value)
+                params[alias] = ",".join(value)
             else:
-                params[key] = value
-
-        if fields:
-            params['fields'] = ",".join(fields)
-
-        current_app.logger.info(f"Initial Params: {params}")
+                params[alias] = value
 
         return self._paginate_results(
             search_url=search_url,
@@ -276,7 +278,7 @@ class SearchService:
                 params['filter.advanced'] = search_expr
     
         for key, value in data_dict.items():
-            alias = search_data.__fields__[key].alias
+            alias = search_data.model_fields[key].alias
             if isinstance(value, list):
                 params[alias] = ",".join(value)
             else:
