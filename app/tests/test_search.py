@@ -5,8 +5,12 @@ from app.schemas.search import MedicoSearch, PacienteSearch
 from requests.exceptions import HTTPError
 
 def test_search_paciente():
-    service = SearchService()
 
+    mock_translate_service = MagicMock()
+    mock_translate_service.translate_fields.side_effect = lambda x: x
+
+    service = SearchService(translate_service=mock_translate_service)
+    
     #mocking paciente search 
     search_data = PacienteSearch(
         condition = "cancer",
@@ -47,7 +51,11 @@ def test_search_paciente():
         )
 
 def test_filter_by_specific_location():
-    service = SearchService()
+    
+    mock_translate_service = MagicMock()
+    mock_translate_service.translate_fields.side_effect = lambda x: x
+
+    service = SearchService(translate_service=mock_translate_service)
 
     studies = [
         {
@@ -74,7 +82,11 @@ def test_filter_by_specific_location():
     assert results[0]["Title"] == "Study in New York"
 
 def test_medico_search():
-    service = SearchService()
+    
+    mock_translate_service = MagicMock()
+    mock_translate_service.translate_fields.side_effect = lambda x: x
+
+    service = SearchService(translate_service=mock_translate_service)
 
     search_data = MedicoSearch(
         title="Diabetes Study",

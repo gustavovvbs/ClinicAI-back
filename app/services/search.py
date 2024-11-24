@@ -8,8 +8,8 @@ from app.services.translate import TranslateService
 class SearchService:
     BASE_URL = "https://clinicaltrials.gov/api/v2/studies"
 
-    def __init__(self):
-        self.translate_service = TranslateService()
+    def __init__(self, translate_service = None):
+        self.translate_service = translate_service or TranslateService()
 
     @staticmethod
     def filter_studies(api_response: Dict[str, Any]) -> List[Dict[str, Any]]:
