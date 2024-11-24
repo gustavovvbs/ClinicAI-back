@@ -17,14 +17,25 @@ class TranslateService:
         else:
             self.translator = translate.Client()
 
-    def translate_fields(self, data, target_language='pt'):
+    def translate_fields(self, data, target_language='pt', desired_fields=["Title", "Description", "Keywords"]):
+        """ 
+        Recursively Translate the desired fields of a JSON object to the target language.
+
+        Args:
+            data (dict): The JSON object to translate.
+            target_language (str): The target language to translate to. Default is 'pt'.
+            desired_fields (list): The fields to translate. Default is ["Title", "Description", "Keywords"].
+
+        Returns:
+            dict: The translated JSON object.
+        """
         strings_to_translate = []
         paths = []
 
         def collect_strings(d, path=[]):
             if isinstance(d, dict):
                 for k, v in d.items():
-                    if k in ["Title", "Description", "Keywords"]:
+                    if k in desired_fields:
                         collect_strings(v, path + [k])
             elif isinstance(d, list):
                 for idx, item in enumerate(d):
@@ -43,7 +54,7 @@ class TranslateService:
             result = self.translator.translate(strings_to_translate, target_language=target_language)
             translated_texts = [item['translatedText'] for item in result]
         except Exception as e:
-            current_app.logger.error(f"Erro na tradução: {e}")
+            current_app.logger.error(f"error during translation: {e}")
             return data
 
         for translated_text, path in zip(translated_texts, paths):

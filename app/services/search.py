@@ -217,7 +217,6 @@ class SearchService:
         Returns:
             list: The filtered results from the target page, or an empty list if there are no results for the query.
         """
-
         AGE_MAPPING = {
             "child": ("0 years", "17 years"),
             "adult": ("18 years", "64 years"),
@@ -232,9 +231,8 @@ class SearchService:
         }
 
         data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
-        if data_dict.get("acceptsHealthyVolunteers") is not None or \
-           data_dict.get("hasResults") is not None or \
-           data_dict.get("sex") is not None:
+
+        if any(key in data_dict for key in ['acceptsHealthyVolunteers', 'hasResults', 'sex']):
             accepts_healthy_volunteers = data_dict.pop("acceptsHealthyVolunteers", None)
             has_results = data_dict.pop("hasResults", None)
             sex = data_dict.pop("sex", None)
@@ -244,8 +242,6 @@ class SearchService:
                 has_results = "results:y" if has_results else "results:n"
             if sex and sex != "all":
                 sex = f"sex:{sex}"
-            elif sex == "all":
-                sex = None
             agg_filters = ",".join(filter(None, [accepts_healthy_volunteers, has_results, sex]))
             if agg_filters:
                 params["aggFilters"] = agg_filters
@@ -276,14 +272,8 @@ class SearchService:
                 search_expr_parts.append(f"AREA[NCTId]{id_value}")
 
             search_expr = " AND ".join(search_expr_parts)
-            params['filter.advanced'] = search_expr
-        else:
-            # remove these fields to avoid aliases in the params
-            data_dict.pop('age', None)
-            data_dict.pop('organization', None)
-            data_dict.pop('phase', None)
-            data_dict.pop('type', None)
-            data_dict.pop('id', None)
+            if search_expr_parts:
+                params['filter.advanced'] = search_expr
     
         for key, value in data_dict.items():
             alias = search_data.__fields__[key].alias
@@ -406,6 +396,14 @@ class SearchService:
 
     @staticmethod
     def handle_api_error(response: requests.Response):
+        """
+        Raises an exception with details about the API error response.
+
+        Args:
+            response (requests.Response): The response object from the API request.
+        Raises:
+            requests.exceptions.HTTPError: If the API response status code is not 200.
+        """
         try:
             error_details = response.json()
         except ValueError:

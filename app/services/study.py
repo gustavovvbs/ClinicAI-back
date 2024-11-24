@@ -8,6 +8,15 @@ class StudyService:
         self.db = get_db()
 
     def create_study(self, study: CreateStudySchema):
+        """
+        Creates a study in the database. 
+
+        Args:
+            study (CreateStudySchema): Study to be created
+
+        Returns:
+            str: Message with the id of the created study
+        """
         #convert from api schema to intern mdoel 
         study = StudyModel(
             **study.model_dump(),
@@ -17,6 +26,15 @@ class StudyService:
         return f"Study created successfully with id {created_study.inserted_id}"
 
     def approve_study(self, study_id: str):
+        """ 
+        Approves a study to be shown in the platform by its id 
+
+        Args:
+            study_id (str): Study id to be approved
+
+        Returns:
+            str: Message with the result of the operation
+        """
         study = self.db.studies.find_one({"_id": ObjectId(study_id)})
         if not study:
             return "Study not found"

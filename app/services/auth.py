@@ -45,12 +45,34 @@ class AuthService:
         return {"access_token": access_token, "token_type": "bearer"}
 
     def _create_token(self, data: dict, expires_delta: timedelta):
+        """
+        Create a new JWT token with the given data and expiration time.
+
+        Args:
+            data (dict): Data to encode in the token.
+            expires_delta (timedelta): Time delta for the token to expire.
+
+        Returns:
+            str: The encoded JWT token.
+        """
         to_encode = data.copy()
         expire = datetime.utcnow() + expires_delta
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, self.SECRET_KEY, algorithm="HS256")
 
     def verify_token(self, token: str):
+        """
+        Verify a JWT token and return the user id.
+
+        Args:
+            token (str): The token to verify.
+
+        Returns:
+            str: The user id encoded in the token.
+        
+        Raises:
+            ValueError: If the token is invalid.
+        """
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("sub")
