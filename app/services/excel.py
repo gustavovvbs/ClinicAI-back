@@ -12,7 +12,7 @@ class ExcelService:
         data: list[dict]
     ):
         try:
-            df = pd.json_normalize(data["studies"])
+            df = pd.json_normalize(data["studies"], max_level=1)
             with BytesIO() as excel_buffer:
                 df.to_excel(excel_buffer, index=False, sheet_name="Estudos Clínicos")
                 excel_buffer.seek(0)
