@@ -41,7 +41,7 @@ def test_search_paciente():
             "pageSize": 1,
             "filter.advanced": "AREA[MaximumAge]RANGE[18 years, 64 years]",
             "filter.overallStatus": "RECRUITING",
-            "query.locn": "Recife, PE",
+            "query.locn": "Recife",
             "query.cond": "cancer"
         }
 

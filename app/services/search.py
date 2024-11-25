@@ -10,6 +10,11 @@ class SearchService:
 
     def __init__(self, translate_service = None):
         self.translate_service = translate_service or TranslateService()
+        self.AGE_MAPPING = {
+        "child": ("0 years", "17 years"),
+        "adult": ("18 years", "64 years"),
+        "senior": ("65 years", "200 years")
+        }
 
     @staticmethod
     def filter_studies(api_response: Dict[str, Any], search_data) -> List[Dict[str, Any]]:
@@ -170,11 +175,6 @@ class SearchService:
         Returns:
             list: The filtered results from the target page, or an empty list if there are no results for the query.
         """
-        AGE_MAPPING = {
-            "child": ("0 years", "17 years"),
-            "adult": ("18 years", "64 years"),
-            "senior": ("65 years", "200 years")
-        }
         search_url = self.BASE_URL
         params = {
             "format": "json",
@@ -184,9 +184,9 @@ class SearchService:
         data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
 
         if any(key in data_dict for key in ['age']):
-            if data_dict["age"] in AGE_MAPPING:
+            if data_dict["age"] in self.AGE_MAPPING:
                 age_value = data_dict.pop('age')
-                age_range = AGE_MAPPING[age_value]
+                age_range = self.AGE_MAPPING[age_value]
                 age_expr = f"AREA[MaximumAge]RANGE[{age_range[0]}, {age_range[1]}]"
                 params['filter.advanced'] = age_expr
 
@@ -198,7 +198,8 @@ class SearchService:
             else:
                 params[alias] = value
 
-        params["query.locn"] = params["query.locn"].split(",")[0].strip() if "query.locn" in params else None
+        if "query.locn" in params:
+            params["query.locn"] = params["query.locn"].split(",")[0].strip()
         return self._paginate_results(
             search_url=search_url,
             params=params,
@@ -223,12 +224,6 @@ class SearchService:
         Returns:
             list: The filtered results from the target page, or an empty list if there are no results for the query.
         """
-        AGE_MAPPING = {
-            "child": ("0 years", "17 years"),
-            "adult": ("18 years", "64 years"),
-            "senior": ("65 years", "200 years")
-        }
-        
         search_url = self.BASE_URL
 
         params = {
@@ -238,51 +233,13 @@ class SearchService:
 
         data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
 
-        if any(key in data_dict for key in ['acceptsHealthyVolunteers', 'hasResults', 'sex']):
-            accepts_healthy_volunteers = data_dict.pop("acceptsHealthyVolunteers", None)
-            has_results = data_dict.pop("hasResults", None)
-            sex = data_dict.pop("sex", None)
-            # lazy way to handle
-            if sex == "all":
-                sex = None
-            if accepts_healthy_volunteers is not None:
-                accepts_healthy_volunteers = "healthy:y" if accepts_healthy_volunteers else "healthy:n"
-            if has_results is not None:
-                has_results = "results:y" if has_results else "results:n"
-            if sex and sex != "all":
-                sex = f"sex:{sex}"
-            agg_filters = ",".join(filter(None, [accepts_healthy_volunteers, has_results, sex]))
-            if agg_filters:
-                params["aggFilters"] = agg_filters
+        agg_filters = self._construct_agg_filters(data_dict)
+        if agg_filters:
+            params["aggFilters"] = agg_filters
 
-        if any(key in data_dict for key in ['age', 'organization', 'studyPhase', 'studyType', 'studyId']):
-            search_expr_parts = []
-
-            age_value = data_dict.pop('age', None)
-            org_value = data_dict.pop('organization', None)
-            phase_value = data_dict.pop('studyPhase', None)
-            type_value = data_dict.pop('studyType', None)
-            id_value = data_dict.pop('studyId', None)
-
-            if org_value:
-                search_expr_parts.append(f"AREA[ResponsiblePartyOldOrganization]{org_value}")
-
-            if age_value in AGE_MAPPING:
-                age_range = AGE_MAPPING[age_value]
-                search_expr_parts.append(f"AREA[MaximumAge]RANGE[{age_range[0]}, {age_range[1]}]")
-
-            if phase_value in {"NA", "EARLY_PHASE1", "PHASE1", "PHASE2", "PHASE3", "PHASE4"}:
-                search_expr_parts.append(f"AREA[Phase]{phase_value}")
-
-            if type_value in {"EXPANDED_ACCESS", "INTERVENTIONAL", "OBSERVATIONAL"}:
-                search_expr_parts.append(f"AREA[StudyType]{type_value}")
-
-            if id_value:
-                search_expr_parts.append(f"AREA[NCTId]{id_value}")
-
-            search_expr = " AND ".join(search_expr_parts)
-            if search_expr_parts:
-                params['filter.advanced'] = search_expr
+        advanced_filters = self._construct_advanced_filters(data_dict)
+        if advanced_filters:
+            params["filter.advanced"] = advanced_filters
     
         for key, value in data_dict.items():
             alias = search_data.model_fields[key].alias
@@ -291,7 +248,8 @@ class SearchService:
             else:
                 params[alias] = value
 
-        params["query.locn"] = params["query.locn"].split(",")[0].strip() if "query.locn" in params else None
+        if "query.locn" in params:
+            params["query.locn"] = params["query.locn"].split(",")[0].strip()
         return self._paginate_results(
             search_url=search_url,
             params=params,
@@ -406,6 +364,53 @@ class SearchService:
             current_page += 1
 
         return []
+
+    def _construct_agg_filters(self, data_dict: Dict[str, Any]) -> Optional[str]:
+        accepts_healthy_volunteers = data_dict.pop("acceptsHealthyVolunteers", None)
+        has_results = data_dict.pop("hasResults", None)
+        sex = data_dict.pop("sex", None)
+        
+        if sex == "all":
+            sex = None
+
+        filters = []
+        if accepts_healthy_volunteers is not None:
+            filters.append("healthy:y" if accepts_healthy_volunteers else "healthy:n")
+        if has_results is not None:
+            filters.append("results:y" if has_results else "results:n")
+        if sex:
+            filters.append(f"sex:{sex}")
+        
+        return ",".join(filters) if filters else None
+
+    def _construct_advanced_filters(self, data_dict: Dict[str, Any]) -> Optional[str]:
+        search_expr_parts = []
+        age_value = data_dict.pop('age', None)
+        org_value = data_dict.pop('organization', None)
+        phase_value = data_dict.pop('studyPhase', None)
+        type_value = data_dict.pop('studyType', None)
+        id_value = data_dict.pop('studyId', None)
+
+        if org_value:
+            search_expr_parts.append(f"AREA[ResponsiblePartyOldOrganization]{org_value}")
+
+        if age_value in self.AGE_MAPPING:
+            age_range = self.AGE_MAPPING[age_value]
+            search_expr_parts.append(f"AREA[MaximumAge]RANGE[{age_range[0]}, {age_range[1]}]")
+
+        if phase_value in {"NA", "EARLY_PHASE1", "PHASE1", "PHASE2", "PHASE3", "PHASE4"}:
+            search_expr_parts.append(f"AREA[Phase]{phase_value}")
+
+        if type_value in {"EXPANDED_ACCESS", "INTERVENTIONAL", "OBSERVATIONAL"}:
+            search_expr_parts.append(f"AREA[StudyType]{type_value}")
+
+        if id_value:
+            search_expr_parts.append(f"AREA[NCTId]{id_value}")
+
+        search_expr = " AND ".join(search_expr_parts)
+
+        return search_expr
+
 
     @staticmethod
     def handle_api_error(response: requests.Response):
