@@ -126,18 +126,18 @@ class SearchService:
             location_info = []
             for loc in locations:
                 if loc.get("status") == data_dict["status"][0]:
-                    facility = loc.get("facility", "N/A")
-                    city = loc.get("city", "N/A")
-                    state = loc.get("state", "N/A")
-                    country = loc.get("country", "N/A")
-                    status = loc.get("status", "N/A")
-                    location_info.append({
-                        "Facility": facility,
-                        "City": city,
-                        "State": state,
-                        "Country": country,
-                        "Status": status
-                    })
+                        facility = loc.get("facility", "N/A")
+                        city = loc.get("city", "N/A")
+                        state = loc.get("state", "N/A")
+                        country = loc.get("country", "N/A")
+                        status = loc.get("status", "N/A")
+                        location_info.append({
+                            "Facility": facility,
+                            "City": city,
+                            "State": state,
+                            "Country": country,
+                            "Status": status
+                        })
             filtered_study["Location"] = location_info or ["N/A"]
 
             conditions = conditions_module.get("conditions", []) or ["N/A"]
@@ -198,6 +198,7 @@ class SearchService:
             else:
                 params[alias] = value
 
+        params["query.locn"] = params["query.locn"].split(",")[0].strip() if "query.locn" in params else None
         return self._paginate_results(
             search_url=search_url,
             params=params,
@@ -241,6 +242,9 @@ class SearchService:
             accepts_healthy_volunteers = data_dict.pop("acceptsHealthyVolunteers", None)
             has_results = data_dict.pop("hasResults", None)
             sex = data_dict.pop("sex", None)
+            # lazy way to handle
+            if sex == "all":
+                sex = None
             if accepts_healthy_volunteers is not None:
                 accepts_healthy_volunteers = "healthy:y" if accepts_healthy_volunteers else "healthy:n"
             if has_results is not None:
@@ -287,7 +291,7 @@ class SearchService:
             else:
                 params[alias] = value
 
-
+        params["query.locn"] = params["query.locn"].split(",")[0].strip() if "query.locn" in params else None
         return self._paginate_results(
             search_url=search_url,
             params=params,
@@ -322,7 +326,7 @@ class SearchService:
         return self._paginate_results(
             search_url=search_url,
             params=params,
-            target_page=page,
+            target_page=page,   
             page_translator = self.translate_service,
         )
 
@@ -344,10 +348,12 @@ class SearchService:
 
         for study in studies:
             for loc in study["Location"]:
-                if isinstance(loc, dict) and filter_city in loc.get("City", "").lower():
-                    study["Location"] = [loc] 
-                    filtered_studies.append(study)
-                    break
+                if isinstance(loc, dict):
+                    city = loc.get("City", "").lower()
+                    if filter_city in city or filter_city == city:
+                        study["Location"] = [loc]
+                        filtered_studies.append(study)
+                        break
 
         return filtered_studies
 
