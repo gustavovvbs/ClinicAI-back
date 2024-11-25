@@ -12,7 +12,7 @@ class SearchService:
         self.translate_service = translate_service or TranslateService()
 
     @staticmethod
-    def filter_studies(api_response: Dict[str, Any], search_data: PacienteSearch | MedicoSearch) -> List[Dict[str, Any]]:
+    def filter_studies(api_response: Dict[str, Any], search_data) -> List[Dict[str, Any]]:
         """
         Performs a GIANT filtering through the api response to get the fields we are interested in (dont ever try to understand this function lol)
         Args:
@@ -357,7 +357,7 @@ class SearchService:
         params: dict, 
         target_page: int,
         page_translator: None ,
-        search_data: PacienteSearch | MedicoSearch = None
+        search_data = None
     ):
         """
         Paginates through the API page results until the target page is reached.
