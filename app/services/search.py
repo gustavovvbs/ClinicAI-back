@@ -12,7 +12,7 @@ class SearchService:
         self.translate_service = translate_service or TranslateService()
 
     @staticmethod
-    def filter_studies(api_response: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def filter_studies(api_response: Dict[str, Any], search_data: PacienteSearch | MedicoSearch) -> List[Dict[str, Any]]:
         """
         Performs a GIANT filtering through the api response to get the fields we are interested in (dont ever try to understand this function lol)
         Args:
@@ -20,6 +20,7 @@ class SearchService:
         Returns:
             list: The filtered studies.
         """
+        data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
         filtered_studies = []
 
         for study in api_response.get("studies", []):
@@ -124,18 +125,19 @@ class SearchService:
             locations = contacts_locations_module.get("locations", [])
             location_info = []
             for loc in locations:
-                facility = loc.get("facility", "N/A")
-                city = loc.get("city", "N/A")
-                state = loc.get("state", "N/A")
-                country = loc.get("country", "N/A")
-                status = loc.get("status", "N/A")
-                location_info.append({
-                    "Facility": facility,
-                    "City": city,
-                    "State": state,
-                    "Country": country,
-                    "Status": status
-                })
+                if loc.get("status") == data_dict["status"][0]:
+                    facility = loc.get("facility", "N/A")
+                    city = loc.get("city", "N/A")
+                    state = loc.get("state", "N/A")
+                    country = loc.get("country", "N/A")
+                    status = loc.get("status", "N/A")
+                    location_info.append({
+                        "Facility": facility,
+                        "City": city,
+                        "State": state,
+                        "Country": country,
+                        "Status": status
+                    })
             filtered_study["Location"] = location_info or ["N/A"]
 
             conditions = conditions_module.get("conditions", []) or ["N/A"]
@@ -200,7 +202,8 @@ class SearchService:
             search_url=search_url,
             params=params,
             target_page=page,
-            page_translator = self.translate_service
+            page_translator = self.translate_service,
+            search_data=search_data
         )
 
     def search_medico(
@@ -289,7 +292,8 @@ class SearchService:
             search_url=search_url,
             params=params,
             target_page=page,
-            page_translator = self.translate_service
+            page_translator = self.translate_service,
+            search_data = search_data
         )
 
     def advanced_search(
@@ -319,7 +323,7 @@ class SearchService:
             search_url=search_url,
             params=params,
             target_page=page,
-            page_translator = self.translate_service
+            page_translator = self.translate_service,
         )
 
     def filter_by_location(
@@ -352,7 +356,8 @@ class SearchService:
         search_url: str,
         params: dict, 
         target_page: int,
-        page_translator: None 
+        page_translator: None ,
+        search_data: PacienteSearch | MedicoSearch = None
     ):
         """
         Paginates through the API page results until the target page is reached.
@@ -382,7 +387,7 @@ class SearchService:
             api_response = response.json()
 
             if current_page == target_page:
-                filtered_response = self.filter_studies(api_response=api_response)
+                filtered_response = self.filter_studies(api_response=api_response, search_data=search_data)
                 filtered_response = self.filter_by_location(studies=filtered_response, location=params.get("query.locn", ""))
                 if page_translator:
                     filtered_response = page_translator.translate_fields(filtered_response)
