@@ -130,7 +130,21 @@ class SearchService:
             locations = contacts_locations_module.get("locations", [])
             location_info = []
             for loc in locations:
-                if loc.get("status") == data_dict["status"][0]:
+                    if loc.get("status"):
+                        if loc.get("status") == search_data["status"]:
+                            facility = loc.get("facility", "N/A")
+                            city = loc.get("city", "N/A")
+                            state = loc.get("state", "N/A")
+                            country = loc.get("country", "N/A")
+                            status = loc.get("status", "N/A")
+                            location_info.append({
+                                "Facility": facility,
+                                "City": city,
+                                "State": state,
+                                "Country": country,
+                                "Status": status
+                            })
+                    else:
                         facility = loc.get("facility", "N/A")
                         city = loc.get("city", "N/A")
                         state = loc.get("state", "N/A")
@@ -143,6 +157,7 @@ class SearchService:
                             "Country": country,
                             "Status": status
                         })
+
             filtered_study["Location"] = location_info or ["N/A"]
 
             conditions = conditions_module.get("conditions", []) or ["N/A"]
@@ -250,6 +265,7 @@ class SearchService:
 
         if "query.locn" in params:
             params["query.locn"] = params["query.locn"].split(",")[0].strip()
+
         return self._paginate_results(
             search_url=search_url,
             params=params,
