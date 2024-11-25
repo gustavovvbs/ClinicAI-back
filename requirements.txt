@@ -2,6 +2,7 @@ flask
 langchain 
 openai 
 pypdf 
+pandas
 tiktoken 
 python-dotenv 
 bs4 
@@ -29,3 +30,4 @@ flask_cors
 bcrypt
 google
 google-cloud-translate
+openpyxl
