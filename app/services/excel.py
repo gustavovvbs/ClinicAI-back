@@ -12,9 +12,9 @@ class ExcelService:
         data: list[dict]
     ):
         try:
-            df = pd.json_normalize(data)
+            df = pd.json_normalize(data["studies"])
             with BytesIO() as excel_buffer:
-                df = df.to_excel(excel_buffer, index=False, sheet_name="Estudos Clínicos")
+                df.to_excel(excel_buffer, index=False, sheet_name="Estudos Clínicos")
                 excel_buffer.seek(0)
                 return excel_buffer.getvalue()
         except Exception as e:
