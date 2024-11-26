@@ -444,7 +444,7 @@ class SearchService:
             if not next_page_token:
                 return []
 
-            if current_page > eval(target_page):
+            if current_page > target_page:
                 break 
 
             current_page += 1
