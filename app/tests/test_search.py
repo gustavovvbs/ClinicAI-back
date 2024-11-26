@@ -46,7 +46,8 @@ def test_search_paciente():
             "filter.advanced": "AREA[MaximumAge]RANGE[18 years, 64 years]",
             "filter.overallStatus": "RECRUITING",
             "query.locn": "Recife",
-            "query.cond": "cancer"
+            "query.cond": "cancer",
+            "countTotal": "true"
         }
 
         mock_get.assert_called_once_with(
@@ -130,6 +131,7 @@ def test_medico_search():
             'aggFilters': 'healthy:n,results:y,sex:female',
             'filter.advanced': 'AREA[ResponsiblePartyOldOrganization]UFPE AND AREA[MaximumAge]RANGE[18 years, 64 years] AND AREA[Phase]PHASE3 AND AREA[StudyType]INTERVENTIONAL AND AREA[NCTId]NCT01234567',
             'query.titles': 'Diabetes Study',
+            'countTotal': 'true'
         }
 
         mock_get.assert_called_once_with(service.BASE_URL, params=expected_params)
