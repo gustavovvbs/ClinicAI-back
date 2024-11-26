@@ -31,10 +31,14 @@ def test_search_paciente():
         results = service.search_paciente(
             search_data,
             page_size=1,
-            page=1
+            page='1'
         )
 
-        assert results == []
+        assert results == {
+            "studies": [],
+            "currentPage": 1,
+            "totalPages": 2,
+        }
 
         expected_params = {
             "format": "json",
@@ -111,10 +115,14 @@ def test_medico_search():
         results = service.search_medico(
             search_data,
             page_size = 1, 
-            page = 1
+            page = '1'
         )
 
-        assert results == []
+        assert results == {
+            'studies': [],
+            "currentPage": 1,
+            "totalPages": 2,
+        }
 
         expected_params = {
             'format': 'json',
