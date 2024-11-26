@@ -13,6 +13,7 @@ class PacienteSearch(BaseModel):
     sex: Optional[str] = Field(None, alias="eligibilityModule.sex")
 
     pageToken: Optional[str] = None
+    page: Optional[str] = Field(None, alias="page")
 
     @model_validator(mode="before")
     def convert_empty_to_none(cls, values):
@@ -52,6 +53,7 @@ class MedicoSearch(BaseModel):
     studyId: Optional[str] = Field(None, alias="query.id")
 
     pageToken: Optional[str] = None
+    page: Optional[str] = Field(None, alias="page")
 
     @model_validator(mode="before")
     def convert_empty_to_none(cls, values):

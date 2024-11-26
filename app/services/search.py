@@ -6,10 +6,9 @@ from app.schemas.search import MedicoSearch
 from app.services.translate import TranslateService
 
 class SearchService:
-    BASE_URL = "https://clinicaltrials.gov/api/v2/studies"
-
     def __init__(self, translate_service = None):
         self.translate_service = translate_service or TranslateService()
+        self.BASE_URL = "https://clinicaltrials.gov/api/v2/studies"
         self.AGE_MAPPING = {
         "child": ("0 years", "17 years"),
         "adult": ("18 years", "64 years"),
@@ -25,7 +24,18 @@ class SearchService:
         Returns:
             list: The filtered studies.
         """
-        data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
+        if hasattr(search_data, 'model_dump'):
+            data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
+        elif isinstance(search_data, dict):
+            data_dict = {
+                k: v for k, v in search_data.items()
+                if v is not None and (
+                    (isinstance(v, (list, dict)) and v) or
+                    (isinstance(v, str) and v.strip()) or
+                    (not isinstance(v, (str, list, dict)))
+                )
+            }
+   
         filtered_studies = []
 
         for study in api_response.get("studies", []):
@@ -215,12 +225,22 @@ class SearchService:
 
         if "query.locn" in params:
             params["query.locn"] = params["query.locn"].split(",")[0].strip()
+        if "page" in params:
+            target_page = params.pop("page")
+            return self._paginate_results(
+                search_url=search_url,
+                params=params,
+                target_page=target_page,
+                page_translator = self.translate_service,
+                search_data = data_dict,
+                page_size = page_size
+            )
         return self._paginate_results(
             search_url=search_url,
             params=params,
             target_page=page,
             page_translator = self.translate_service,
-            search_data=search_data
+            search_data=data_dict
         )
 
     def search_medico(
@@ -246,8 +266,9 @@ class SearchService:
             "pageSize": page_size
         }
 
+       
         data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
-
+    
         agg_filters = self._construct_agg_filters(data_dict)
         if agg_filters:
             params["aggFilters"] = agg_filters
@@ -265,13 +286,24 @@ class SearchService:
 
         if "query.locn" in params:
             params["query.locn"] = params["query.locn"].split(",")[0].strip()
+        if "page" in params:
+            target_page = params.pop("page")
+
+            return self._paginate_results(
+                search_url=search_url,
+                params=params,
+                target_page=target_page,
+                page_translator = self.translate_service,
+                search_data = data_dict,
+                page_size = page_size
+            )
 
         return self._paginate_results(
             search_url=search_url,
             params=params,
-            target_page=page,
+            target_page = page,
             page_translator = self.translate_service,
-            search_data = search_data
+            search_data = data_dict
         )
 
     def advanced_search(
@@ -335,9 +367,10 @@ class SearchService:
         self, 
         search_url: str,
         params: dict, 
-        target_page: int,
+        target_page: str,
         page_translator: None ,
-        search_data = None
+        search_data: dict = None,
+        page_size: Optional[int] = 3
     ):
         """
         Paginates through the API page results until the target page is reached.
@@ -355,31 +388,42 @@ class SearchService:
         """
         current_page = 1
         next_page_token = None 
+        response_dict = {}
 
-        while current_page <= target_page:
-            if next_page_token: 
+        while True:
+            if next_page_token:
                 params["pageToken"] = next_page_token
-            
-            response = requests.get(search_url, params = params)
+
+            response = requests.get(self.BASE_URL, params=params)
             if response.status_code != 200:
                 self.handle_api_error(response)
 
-            api_response = response.json()
-
-            if current_page == target_page:
-                filtered_response = self.filter_studies(api_response=api_response, search_data=search_data)
-                filtered_response = self.filter_by_location(studies=filtered_response, location=params.get("query.locn", ""))
+            response_data = response.json()
+            total_studies = response_data.get("totalCount", page_size)
+            total_pages = total_studies // page_size + 1
+            if current_page == eval(target_page):
+                filtered_response = self.filter_studies(api_response = response_data, search_data=search_data)
+                location = params.get("query.locn")
+                if location:
+                    filtered_response = self.filter_by_location(studies=filtered_response, location=location)
                 if page_translator:
                     filtered_response = page_translator.translate_fields(filtered_response)
-                return filtered_response
 
-            next_page_token = api_response.get("nextPageToken")
+                response_dict["studies"] = filtered_response
+                response_dict["totalPages"] = total_pages
+                response_dict["currentPage"] = current_page
+                return response_dict
+
+            next_page_token = response_data.get("nextPageToken")
             if not next_page_token:
-                break
+                return []
 
             current_page += 1
+            if current_page > eval(target_page):
+                break 
 
         return []
+
 
     def _construct_agg_filters(self, data_dict: Dict[str, Any]) -> Optional[str]:
         accepts_healthy_volunteers = data_dict.pop("acceptsHealthyVolunteers", None)
