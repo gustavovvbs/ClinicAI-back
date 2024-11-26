@@ -411,19 +411,20 @@ class SearchService:
             response_data = response.json()
             total_studies = response_data.get("totalCount", 0)
             total_pages = (total_studies + page_size - 1) // page_size
-
+            if total_studies <= page_size:
+                total_pages = 1
             if total_studies == 0:
                 return {
                     "studies": [],
                     "totalPages": total_pages,
-                    "currentPage": target_page
+                    "currentPage": current_page
                 }
 
             if target_page > total_pages:
                 return {
                     "studies": [],
                     "totalPages": total_pages,
-                    "currentPage": target_page
+                    "currentPage": current_page
                 }
 
             if current_page == eval(target_page):

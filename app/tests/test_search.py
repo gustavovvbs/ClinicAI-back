@@ -37,7 +37,7 @@ def test_search_paciente():
         assert results == {
             "studies": [],
             "currentPage": 1,
-            "totalPages": 2,
+            "totalPages": 1,
         }
 
         expected_params = {
@@ -121,7 +121,7 @@ def test_medico_search():
         assert results == {
             'studies': [],
             "currentPage": 1,
-            "totalPages": 2,
+            "totalPages": 1,
         }
 
         expected_params = {
