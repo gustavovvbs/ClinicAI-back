@@ -131,7 +131,7 @@ class SearchService:
             location_info = []
             for loc in locations:
                     if loc.get("status"):
-                        if loc.get("status") == data_dict.get("status"):
+                        if loc.get("status") == data_dict.get("status") or loc.get("status") in data_dict.get("status"):
                             facility = loc.get("facility", "N/A")
                             city = loc.get("city", "N/A")
                             state = loc.get("state", "N/A")
