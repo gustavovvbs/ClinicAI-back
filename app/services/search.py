@@ -393,7 +393,6 @@ class SearchService:
                 raise ValueError("the target page must be a positive integer")
         except ValueError:
             raise ValueError("invalid target page. the target page must be a positive integer")
-
         current_page = 1
         next_page_token = None 
         response_dict = {}
@@ -403,13 +402,14 @@ class SearchService:
                 params["pageToken"] = next_page_token
             else:
                 params.pop("pageToken", None)
+            params["countTotal"] = "true"
 
             response = requests.get(self.BASE_URL, params=params)
             if response.status_code != 200:
                 self.handle_api_error(response)
 
             response_data = response.json()
-            total_studies = response_data.get("totalCount", 0)
+            total_studies = response_data.get("totalCount", page_size)
             total_pages = (total_studies + page_size - 1) // page_size
             if total_studies <= page_size:
                 total_pages = 1
@@ -427,7 +427,7 @@ class SearchService:
                     "currentPage": current_page
                 }
 
-            if current_page == eval(target_page):
+            if current_page == target_page:
                 filtered_response = self.filter_studies(api_response = response_data, search_data=search_data)
                 location = params.get("query.locn", "")
                 if location:
