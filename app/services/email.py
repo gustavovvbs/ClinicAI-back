@@ -13,7 +13,7 @@ class EmailService:
         self.smtp_server = "smtp.gmail.com"
         self.smtp_port = 587
         self.sender_email = "siriolibanesinfos@gmail.com"
-        sender_password = os.getenv("EMAIL_PASSWORD")
+        sender_password = os.getenv("SENDER_PASSWORD")
 
     def send_email(self, email: str, studies: List[dict]):
         """
