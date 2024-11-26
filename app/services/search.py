@@ -396,11 +396,17 @@ class SearchService:
         current_page = 1
         next_page_token = None 
         response_dict = {}
+        # only the first request will count the total studies, so im doing this to only store the total studies number at the first request
+        first_time = False
+        total_studies = 0
+
 
         while current_page <= target_page:
             if next_page_token:
+                first_time = False
                 params["pageToken"] = next_page_token
             else:
+                first_time = True
                 params.pop("pageToken", None)
             params["countTotal"] = "true"
 
@@ -409,7 +415,8 @@ class SearchService:
                 self.handle_api_error(response)
 
             response_data = response.json()
-            total_studies = response_data.get("totalCount", page_size)
+            if first_time:
+                total_studies = response_data.get("totalCount", page_size)
             total_pages = (total_studies + page_size - 1) // page_size
             if total_studies <= page_size:
                 total_pages = 1
