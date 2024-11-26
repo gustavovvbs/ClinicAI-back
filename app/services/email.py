@@ -13,7 +13,7 @@ class EmailService:
         self.smtp_server = "smtp.gmail.com"
         self.smtp_port = 587
         self.sender_email = "siriolibanesinfos@gmail.com"
-        sender_password = os.getenv("SENDER_PASSWORD")
+        self.sender_password = os.getenv("SENDER_PASSWORD")
 
     def send_email(self, email: str, studies: List[dict]):
         """
@@ -29,7 +29,7 @@ class EmailService:
         try:
             with SMTP(self.smtp_server, self.smtp_port) as server:
                 server.starttls()
-                server.login(self.sender_email, sender_password)
+                server.login(self.sender_email, self.sender_password)
 
                 study_list_items = ""
                 for i, study in enumerate(studies):
