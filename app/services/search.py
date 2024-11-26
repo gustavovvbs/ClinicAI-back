@@ -187,7 +187,7 @@ class SearchService:
         self,
         search_data: PacienteSearch,
         page_size: int = 3,
-        page: int = 1
+        page: str = '1'
     ) -> List[Dict[str, Any]]:
         """ 
         Searches for studies based on the provided search fields. (only basic fields for the Paciente search)
@@ -247,7 +247,7 @@ class SearchService:
         self, 
         search_data: MedicoSearch,
         page_size: int = 3,
-        page: int = 1
+        page: str = '1'
     ):
         """ 
         Searches for studies based on the provided search fields. (more detailed fields in the Medico search)
@@ -376,9 +376,10 @@ class SearchService:
         Paginates through the API page results until the target page is reached.
         Args:
             search_url (str): The URL of the API endpoint to search.
-            params (dict): The query parameters to include in the API request.
+            params (dict): The query parameters to include in the ct api request. (not exatcly the same as the search_data, cause it masks the fields into query syntax)
             target_page (int): The page number to retrieve.
             page_translator (None): An optional translator to apply to the results.
+            search_data (dict): The search data to filter the results.
         Returns:
             list: The filtered results from the target page, or an empty list if the target page is not reached.
         Raises:
@@ -386,24 +387,48 @@ class SearchService:
 
         notes: it will make a request to the CT api target_page times, even though the data from these 'on the way' requests are not processed or filtered, it might be a point to be cautious about in the case of a high target page number
         """
+        try:
+            target_page = int(target_page)
+            if target_page < 1:
+                raise ValueError("the target page must be a positive integer")
+        except ValueError:
+            raise ValueError("invalid target page. the target page must be a positive integer")
+
         current_page = 1
         next_page_token = None 
         response_dict = {}
 
-        while True:
+        while current_page <= target_page:
             if next_page_token:
                 params["pageToken"] = next_page_token
+            else:
+                params.pop("pageToken", None)
 
             response = requests.get(self.BASE_URL, params=params)
             if response.status_code != 200:
                 self.handle_api_error(response)
 
             response_data = response.json()
-            total_studies = response_data.get("totalCount", page_size)
-            total_pages = total_studies // page_size + 1
+            total_studies = response_data.get("totalCount", 0)
+            total_pages = (total_studies + page_size - 1) // page_size
+
+            if total_studies == 0:
+                return {
+                    "studies": [],
+                    "totalPages": total_pages,
+                    "currentPage": target_page
+                }
+
+            if target_page > total_pages:
+                return {
+                    "studies": [],
+                    "totalPages": total_pages,
+                    "currentPage": target_page
+                }
+
             if current_page == eval(target_page):
                 filtered_response = self.filter_studies(api_response = response_data, search_data=search_data)
-                location = params.get("query.locn")
+                location = params.get("query.locn", "")
                 if location:
                     filtered_response = self.filter_by_location(studies=filtered_response, location=location)
                 if page_translator:
@@ -418,11 +443,16 @@ class SearchService:
             if not next_page_token:
                 return []
 
-            current_page += 1
             if current_page > eval(target_page):
                 break 
 
-        return []
+            current_page += 1
+
+        return {
+            "studies": [],
+            "totalPages": total_pages,
+            "currentPage": current_page
+        }
 
 
     def _construct_agg_filters(self, data_dict: Dict[str, Any]) -> Optional[str]:
