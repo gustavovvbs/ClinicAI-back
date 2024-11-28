@@ -5,6 +5,7 @@ from app.schemas.auth import UserCreateSchema, UserLoginSchema
 from app.core.security import hash_password, verify_password
 from jose import jwt, JWTError
 from dotenv import load_dotenv
+from bson import ObjectId
 
 load_dotenv()
 
@@ -78,6 +79,14 @@ class AuthService:
             user_id = payload.get("sub")
             if user_id is None:
                 raise ValueError("Invalid token")
-            return user_id
+
+            found_user = self.db.users.find_one({"_id": ObjectId(user_id)})
+            if not found_user:
+                raise ValueError("User not found")
+        
+            return {
+                "user_id": str(found_user.get("_id")),
+                "username": found_user.get("username"),
+            }
         except JWTError as e:
             raise ValueError("Invalid token") from e

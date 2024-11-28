@@ -38,3 +38,21 @@ def login_user(data: UserLoginSchema):
     except Exception as e:
         current_app.logger.error(f'Internal server error: {e}')
         return jsonify({'error': f'internal server error {e}'}), 500
+
+@auth_bp.route('/verify', methods = ["POST"])
+def verify_user():
+    data = request.get_json()
+    # improvised validation
+    if "token" not in data:
+        return jsonify({"error": "token not provided"}), 400
+    try:
+        auth_service = AuthService(get_db())
+        token = data.get('token')
+        if not token:
+            return jsonify({'error': 'token not provided'}), 400
+        payload = auth_service.verify_token(token)
+        return jsonify(payload), 200
+    except Exception as e:
+        current_app.logger.error(f'Internal server error: {e}')
+        return jsonify({'error': f'internal server error {e}'}), 500
+

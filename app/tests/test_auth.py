@@ -126,13 +126,21 @@ def test_create_token(auth_service):
     assert payload["sub"] == "user_id"
     assert "exp" in payload
 
-def test_verify_token(auth_service):
+def test_verify_token(mock_db, auth_service):
     auth_service.SECRET_KEY = secret_key_mock
-    test_data = {"sub": "user_id"}
+    test_data = {"sub": "66e9a4949ce104f4fabc9730"}
     token = auth_service._create_token(test_data, timedelta(days=1))
 
-    user_id = auth_service.verify_token(token)
-    assert user_id == "user_id"
+    mock_db.users.find_one.return_value = {
+        "_id": "66e9a4949ce104f4fabc9730",
+        "username": "testuser",
+        "email": "test@example.com"
+    }
+
+    user = auth_service.verify_token(token)
+    assert user["user_id"] == "66e9a4949ce104f4fabc9730"
+    assert user["username"] == "testuser"
+
 
 def test_verify_invalid_token(auth_service):
     auth_service.SECRET_KEY = secret_key_mock
