@@ -43,5 +43,11 @@ class StudyService:
         self.db.studies.update_one({"_id": ObjectId(study_id)}, {"$set": {"isAccepted": True}})
         return "Study successfully accepted"
 
+    def get_studies(self):
+        studies = list(self.db.studies.find())
+        for study in studies:
+            study["_id"] = str(study["_id"])
+        return studies
+
 
        

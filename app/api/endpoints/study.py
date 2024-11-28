@@ -24,3 +24,12 @@ def approve_study(study_id):
         return jsonify({"message": message}), 200
     except Exception as e:
         return jsonify({"error": f"internal server error {e}"}), 500
+
+@study_bp.route("/", methods=["GET"])
+def get_studies():
+    try:
+        study_service = StudyService()
+        studies = study_service.get_studies()
+        return jsonify({"studies": studies}), 200
+    except Exception as e:
+        return jsonify({"error": f"internal server error {e}"}), 500
