@@ -17,7 +17,7 @@ app.register_blueprint(user_bp, url_prefix = '/user')
 app.register_blueprint(search_bp, url_prefix = '/search')
 app.register_blueprint(email_bp, url_prefix='/email')
 app.register_blueprint(study_bp, url_prefix='/study')
-app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
+# app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
 app.register_blueprint(excel_bp, url_prefix='/ ')
 
 
