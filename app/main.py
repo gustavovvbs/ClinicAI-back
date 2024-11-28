@@ -6,7 +6,7 @@ from app.api.endpoints.user import user_bp
 from app.api.endpoints.search import search_bp
 from app.api.endpoints.study import study_bp
 from app.api.endpoints.excel import excel_bp
-from app.api.endpoints.chatbot import chatbot_bp
+# from app.api.endpoints.chatbot import chatbot_bp
 
 from flask_cors import CORS
 

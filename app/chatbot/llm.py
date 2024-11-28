@@ -40,8 +40,8 @@ system_has_doenca = """
     Você vai receber uma mensagem e sua tarefa é definir se a mensagem enviada pelo usuário tem a doença/condição definida. 
     """ 
 
-model_name = "gpt-4o-mini"
-llm = ChatOpenAI(model_name=model_name)
+# model_name = "gpt-4o-mini"
+# llm = ChatOpenAI(model_name=model_name)
 
 def has_doenca_classify(message: str) -> bool:
     llm_extractor = llm.bind_tools([HasDoenca])
