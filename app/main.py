@@ -21,7 +21,7 @@ app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
 app.register_blueprint(excel_bp, url_prefix='/ ')
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 @app.route('/')
 def index():

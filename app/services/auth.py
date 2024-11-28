@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import os
+from functools import lru_cache
 from app.models.user import UserModel
 from app.schemas.auth import UserCreateSchema, UserLoginSchema
 from app.core.security import hash_password, verify_password
@@ -14,6 +15,12 @@ class AuthService:
         self.db = db
         self.ACCESS_TOKEN_EXPIRE_DAYS = 7
         self.SECRET_KEY = os.getenv("SECRET_KEY")
+
+    @lru_cache(maxsize=128)
+    def _get_user_by_id(self, user_id: str):
+        return self.db.users.find_one({
+            "_id": ObjectId(user_id)
+        })
 
     def register(self, user_data: dict):
         existing_user = self.db.users.find_one({"email": user_data["email"]})
@@ -75,18 +82,18 @@ class AuthService:
             ValueError: If the token is invalid.
         """
         try:
-            payload = jwt.decode(token, self.SECRET_KEY, algorithms=["HS256"])
-            user_id = payload.get("sub")
-            if user_id is None:
-                raise ValueError("Invalid token")
+                payload = jwt.decode(token, self.SECRET_KEY, algorithms=["HS256"])
+                user_id = payload.get("sub")
+                if user_id is None:
+                    raise ValueError("Invalid token")
 
-            found_user = self.db.users.find_one({"_id": ObjectId(user_id)})
-            if not found_user:
-                raise ValueError("User not found")
-        
-            return {
-                "user_id": str(found_user.get("_id")),
-                "username": found_user.get("username"),
-            }
-        except JWTError as e:
-            raise ValueError("Invalid token") from e
+                found_user = self._get_user_by_id(user_id)
+                if not found_user:
+                    raise ValueError("User not found")
+            
+                return {
+                    "user_id": str(found_user["_id"]),
+                    "username": found_user.get("username"),
+                }
+        except JWTError:
+            raise ValueError("Invalid token")
