@@ -4,7 +4,7 @@ from app.models.location import LocationModel
 from app.models.contact import ContactModel
 from app.models.intervention import InterventionModel
 from app.models.researcher import ResearcherModel
-from app.models.date import DateModel
+# from app.models.date import DateModel
 
 class StudyModel(BaseModel):
     Title: str = Field(None, description="Title of the study")
@@ -14,8 +14,8 @@ class StudyModel(BaseModel):
     Sponsor: str = Field(None, description="Sponsor of the study")
     FunderType: str = Field(None, description="Funder type of the study")
     Organization: str = Field(None, description="Organization of the study")
-    StartDate: DateModel = Field(None, description="Start date of the study")
-    endDate: DateModel = Field(None, description="End date of the study")
+    StartDate: str = Field(None, description="Start date of the study")
+    endDate: str = Field(None, description="End date of the study")
     Keywords: list[str] = Field(None, description="Keywords of the study")
     Status: list[str] = Field(None, description="Status of the study")
     Location: list[LocationModel] = Field(None, description="Location of the study")
@@ -28,10 +28,10 @@ class StudyModel(BaseModel):
     Phase: list[str] = Field(None, description="Phase of the study")
     HealthyVolunteers: bool = Field(True, description="Healthy volunteers of the study")
     Contacts: list[ContactModel] = Field(None, description="Contacts of the study")
-    isAccepted: Optional[bool] = Field(False, description="If the study is accepted")
     Collaborators: list[str] = Field(None, description="Collaborators of the study")
     Researchers: list[ResearcherModel] = Field(None, description="Researchers of the study")
-    PrimaryCompletionDate: DateModel = Field(None, description="Primary completion date of the study")
-    LastUpdatedPostDate: DateModel = Field(None, description="Last updated date of the study")
+    PrimaryCompletionDate: str = Field(None, description="Primary completion date of the study")
+    LastUpdatedPostDate: str = Field(None, description="Last updated date of the study")
     HasPublishedResults: bool = Field(True, description="If the study has published results")
-    LastUpdatedPostDate: Optional[DateModel] = Field(None, description="Last updated date of the study")
+    LastUpdatedPostDate: Optional[str] = Field(None, description="Last updated date of the study")
+    sub_status: Optional[str] = Field('pending', description="status of the study's submission")

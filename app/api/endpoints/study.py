@@ -9,12 +9,12 @@ study_bp = Blueprint("study", __name__)
 @study_bp.route("/", methods=["POST"])
 @validate_json(CreateStudySchema)
 def create_study(data):
-    try:
-        study_service = StudyService()
-        created_study_id = study_service.create_study(data)
-        return jsonify({"message": f"Study created successfully with id {created_study_id}"}), 201
-    except Exception as e:
-        return jsonify({"error": f"internal server error {e}"}), 500
+    # try:
+    study_service = StudyService()
+    created_study_id = study_service.create_study(data)
+    return jsonify({"message": f"Study created successfully with id {created_study_id}"}), 201
+    # except Exception as e:
+    #     return jsonify({"error": f"internal server error {e}"}), 500
 
 @study_bp.route("/approve/<study_id>", methods=["POST"])
 def approve_study(study_id):
@@ -28,8 +28,22 @@ def approve_study(study_id):
 @study_bp.route("/", methods=["GET"])
 def get_studies():
     try:
+        status = request.args.get('status')
         study_service = StudyService()
-        studies = study_service.get_studies()
+        if status:
+            studies = study_service.get_studies(status=status)
+        else:
+            studies = study_service.get_studies()
         return jsonify({"studies": studies}), 200
     except Exception as e:
         return jsonify({"error": f"internal server error {e}"}), 500
+
+@study_bp.route("/reject/<study_id>", methods=["POST"])
+def reject_study(study_id):
+    try:
+        study_service = StudyService()
+        message = study_service.reject_study(study_id)
+        return jsonify({"message": message}), 200
+    except Exception as e:
+        return jsonify({"error": f"internal server error {e}"}), 500
+

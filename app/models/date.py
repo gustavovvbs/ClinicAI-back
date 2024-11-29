@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field 
+# from pydantic import BaseModel, Field 
 
-class DateModel(BaseModel):
-    date: str 
-    type: str
+# class DateModel(BaseModel):
+#     date: str 
+#     type: str
