@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from datetime import timedelta, datetime
 from jose import jwt
 from app.services.auth import AuthService
-from app.schemas.auth import UserCreateSchema
+from app.models.user import UserModel
 from pydantic import ValidationError
 from app.main import create_app
 from flask import current_app
@@ -30,7 +30,7 @@ def auth_service(app, mock_db):
         yield service
 
 def test_register_new_user(auth_service, mock_db):
-    user_data = UserCreateSchema(
+    user_data = UserModel(
         username="testuser",
         email="test@example.com",
         password="strongpassword123"
@@ -47,7 +47,7 @@ def test_register_new_user(auth_service, mock_db):
     mock_db.users.insert_one.assert_called_once()
 
 def test_register_existing_user(auth_service, mock_db):
-    user_data = UserCreateSchema(
+    user_data = UserModel(
         username="existinguser",
         email="existing@example.com",
         password="strongpassword123"
