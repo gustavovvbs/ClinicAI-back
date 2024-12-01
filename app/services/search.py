@@ -140,20 +140,19 @@ class SearchService:
             locations = contacts_locations_module.get("locations", [])
             location_info = []
             for loc in locations:
-                    if loc.get("status"):
-                        if loc.get("status") == data_dict.get("status") or loc.get("status") in data_dict.get("status"):
-                            facility = loc.get("facility", "N/A")
-                            city = loc.get("city", "N/A")
-                            state = loc.get("state", "N/A")
-                            country = loc.get("country", "N/A")
-                            status = loc.get("status", "N/A")
-                            location_info.append({
-                                "Facility": facility,
-                                "City": city,
-                                "State": state,
-                                "Country": country,
-                                "Status": status
-                            })
+                    if data_dict.get("status") and loc.get("status") in data_dict.get("status"):
+                        facility = loc.get("facility", "N/A")
+                        city = loc.get("city", "N/A")
+                        state = loc.get("state", "N/A")
+                        country = loc.get("country", "N/A")
+                        status = loc.get("status", "N/A")
+                        location_info.append({
+                            "Facility": facility,
+                            "City": city,
+                            "State": state,
+                            "Country": country,
+                            "Status": status
+                        })
                     else:
                         facility = loc.get("facility", "N/A")
                         city = loc.get("city", "N/A")
