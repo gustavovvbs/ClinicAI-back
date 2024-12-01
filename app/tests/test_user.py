@@ -1,15 +1,32 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import Mock
 from app.services.user import UserService
+from bson import ObjectId
+from app.main import create_app
+
+@pytest.fixture
+def app():
+    app = create_app()
+    # app.config['SECRET_KEY'] = secret_key_mock
+    return app
 
 @pytest.fixture
 def mock_db():
-    db = MagicMock()
-    return db
+    return Mock()
 
 @pytest.fixture
-def user_service(mock_db):
-    return UserService(mock_db)
+def auth_service(app, mock_db):
+    with app.app_context():
+        app.mongo = mock_db  # Mock do banco de dados
+        service = AuthService()
+        yield service
+
+@pytest.fixture
+def user_service(app, mock_db):
+    with app.app_context():
+        app.mongo = mock_db
+        service = UserService()
+        yield service
 
 def test_get_user_by_id(user_service, mock_db):
     mock_db.users.find_one.return_value = {"_id": "507f1f77bcf86cd799439011", "username": "testuser", "email": "test@example.com"}

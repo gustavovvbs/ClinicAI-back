@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.core.validation_middleware import validate_json
+from app.core.auth_middleware import validate_token
 from app.schemas.study import CreateStudySchema 
 from app.services.study import StudyService
 from app.services.auth import AuthService
@@ -17,7 +18,9 @@ def create_study(data):
     #     return jsonify({"error": f"internal server error {e}"}), 500
 
 @study_bp.route("/approve/<study_id>", methods=["POST"])
+@validate_token
 def approve_study(study_id):
+
     try:
         study_service = StudyService()
         message = study_service.approve_study(study_id)
@@ -26,6 +29,7 @@ def approve_study(study_id):
         return jsonify({"error": f"internal server error {e}"}), 500
 
 @study_bp.route("/", methods=["GET"])
+@validate_token
 def get_studies():
     try:
         status = request.args.get('status')
@@ -39,6 +43,7 @@ def get_studies():
         return jsonify({"error": f"internal server error {e}"}), 500
 
 @study_bp.route("/reject/<study_id>", methods=["POST"])
+@validate_token
 def reject_study(study_id):
     try:
         study_service = StudyService()

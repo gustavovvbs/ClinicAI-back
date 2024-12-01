@@ -1,7 +1,6 @@
 from app.models.user import UserModel
 from app.schemas.user import UpdateUser
 from app.services.user import UserService 
-from app.db.mongo_client import get_db 
 from app.core.validation_middleware import validate_json
 from flask import Blueprint, request, jsonify, current_app
 
@@ -11,7 +10,7 @@ user_bp = Blueprint('user', __name__)
 def get_user_endpoint(user_id):
     try:
         current_app.logger.info('Get user endpoint called')
-        user_service = UserService(get_db())
+        user_service = UserService()
         user = user_service.get_user_by_id(user_id)
         return jsonify(user), 200
     except ValueError as e:
@@ -23,7 +22,7 @@ def get_user_endpoint(user_id):
 def update_user_endpoint(data, user_id):
     try:
         current_app.logger.info('Update user endpoint called')
-        user_service = UserService(get_db())
+        user_service = UserService()
         update_data = data.model_dump()
         result = user_service.update_user(user_id, update_data)
         return jsonify(result), 200
@@ -35,7 +34,7 @@ def update_user_endpoint(data, user_id):
 def delete_user_endpoint(user_id):
     try:
         current_app.logger.info('Delete user endpoint called')
-        user_service = UserService(get_db())
+        user_service = UserService()
         result = user_service.delete_user(user_id)
         return jsonify(result), 200
     except ValueError as e:

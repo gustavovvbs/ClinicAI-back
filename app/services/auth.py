@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import os
 from functools import lru_cache
+from flask import current_app
 from app.models.user import UserModel
 from app.schemas.auth import UserCreateSchema, UserLoginSchema
 from app.core.security import hash_password, verify_password
@@ -11,8 +12,8 @@ from bson import ObjectId
 load_dotenv()
 
 class AuthService:
-    def __init__(self, db):
-        self.db = db
+    def __init__(self):
+        self.db = current_app.mongo
         self.ACCESS_TOKEN_EXPIRE_DAYS = 7
         self.SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -70,13 +71,13 @@ class AuthService:
 
     def verify_token(self, token: str):
         """
-        Verify a JWT token and return the user id.
+        Verify a JWT token and returns if the user exists.
 
         Args:
             token (str): The token to verify.
 
         Returns:
-            str: The user id encoded in the token.
+            bool: Boolean indicating the validity of the jwt token.
         
         Raises:
             ValueError: If the token is invalid.
@@ -89,11 +90,8 @@ class AuthService:
 
                 found_user = self._get_user_by_id(user_id)
                 if not found_user:
-                    raise ValueError("User not found")
+                    return False
             
-                return {
-                    "user_id": str(found_user["_id"]),
-                    "username": found_user.get("username"),
-                }
+                return True
         except JWTError:
             raise ValueError("Invalid token")

@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.services.auth import AuthService
 from app.schemas.auth import UserCreateSchema, UserLoginSchema
-from app.db.mongo_client import get_db
 from app.core.validation_middleware import validate_json
 from pydantic import ValidationError
 
@@ -12,7 +11,7 @@ auth_bp = Blueprint('auth', __name__)
 def register_user(data: UserCreateSchema):
     try:
         current_app.logger.info('Register endpoint called')
-        auth_service = AuthService(get_db())
+        auth_service = AuthService()
         auth_service.register(user_data.model_dump())
         return jsonify({'message': 'user created successfully'}), 201
 
@@ -29,7 +28,7 @@ def register_user(data: UserCreateSchema):
 def login_user(data: UserLoginSchema):
     try:
         current_app.logger.info('Login endpoint called')
-        auth_service = AuthService(get_db())
+        auth_service = AuthService()
         payload = auth_service.login(data.model_dump())
         return jsonify(payload), 200
     except ValidationError as e:
@@ -46,7 +45,7 @@ def verify_user():
     if "token" not in data:
         return jsonify({"error": "token not provided"}), 400
     try:
-        auth_service = AuthService(get_db())
+        auth_service = AuthService()
         token = data.get('token')
         if not token:
             return jsonify({'error': 'token not provided'}), 400

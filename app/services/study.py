@@ -1,12 +1,12 @@
 from app.models.study import StudyModel 
 from app.schemas.study import CreateStudySchema
-from app.db.mongo_client import get_db
+from flask import current_app
 from bson import ObjectId
 from typing import Optional
 
 class StudyService:
     def __init__(self):
-        self.db = get_db()
+        self.db = current_app.mongo
 
     def create_study(self, study: CreateStudySchema, status: Optional[str] = None) -> str:
         """
@@ -77,6 +77,15 @@ class StudyService:
         for study in studies:
             study["_id"] = str(study["_id"])
         return studies
+
+    def get_study(self, study_id: str):
+        study = self.db.studies.find_one({"_id": ObjectId(study_id)})
+        if not study:
+            return "Study not found"
+        study["_id"] = str(study["_id"])
+        return study
+
+
 
 
        

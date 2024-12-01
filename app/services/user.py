@@ -1,9 +1,9 @@
-from app.db.mongo_client import get_db 
+from flask import current_app
 from bson import ObjectId
 
 class UserService:
-    def __init__(self, db):
-        self.db = db 
+    def __init__(self):
+        self.db = current_app.mongo
 
     def get_user_by_id(self, user_id):
         try:

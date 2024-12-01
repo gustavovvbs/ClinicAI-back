@@ -1,7 +1,8 @@
 from pymongo import MongoClient 
+from flask import current_app
 from app.core.config import Config
 
-def get_db():
+def init_db(app):
     client = MongoClient(Config.MONGO_URI)
     collection = client['sprint-hsl']
-    return collection
+    app.mongo = collection
