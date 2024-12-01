@@ -9,13 +9,14 @@ from app.models.user import UserModel
 from pydantic import ValidationError
 from app.main import create_app
 from flask import current_app
+from app.schemas.auth import UserCreateSchema
 
 secret_key_mock = "f19a51f6df5b7fa6e0c01e29f146343e596a7899ae3a8f5bd241b0fc6a26abd7"
 
 @pytest.fixture
 def app():
     app = create_app()
-    # app.config['SECRET_KEY'] = secret_key_mock
+    app.config['SECRET_KEY'] = secret_key_mock
     return app
 
 @pytest.fixture
@@ -30,7 +31,8 @@ def auth_service(app, mock_db):
         yield service
 
 def test_register_new_user(auth_service, mock_db):
-    user_data = UserModel(
+    auth_service.SECRET_KEY = secret_key_mock
+    user_data = UserCreateSchema(
         username="testuser",
         email="test@example.com",
         password="strongpassword123"
@@ -47,7 +49,8 @@ def test_register_new_user(auth_service, mock_db):
     mock_db.users.insert_one.assert_called_once()
 
 def test_register_existing_user(auth_service, mock_db):
-    user_data = UserModel(
+    auth_service.SECRET_KEY = secret_key_mock
+    user_data = UserCreateSchema(
         username="existinguser",
         email="existing@example.com",
         password="strongpassword123"
@@ -58,6 +61,7 @@ def test_register_existing_user(auth_service, mock_db):
         auth_service.register(user_data.model_dump())
 
 def test_register_invalid_data(auth_service):
+    auth_service.SECRET_KEY = secret_key_mock
     with pytest.raises(ValidationError):
         invalid_user_data = UserCreateSchema(
             username="invalid-username",
@@ -67,6 +71,7 @@ def test_register_invalid_data(auth_service):
         auth_service.register(invalid_user_data.model_dump())
 
 def test_login_successful(auth_service, mock_db):
+    auth_service.SECRET_KEY = secret_key_mock
     email = "login@example.com"
     password = "correctpassword"
     hashed_password = auth_service._create_token({"sub": "user_id"}, timedelta(days=1))
@@ -90,6 +95,7 @@ def test_login_successful(auth_service, mock_db):
         assert result["token_type"] == "bearer"
 
 def test_login_user_not_found(auth_service, mock_db):
+    auth_service.SECRET_KEY = secret_key_mock
     mock_db.users.find_one.return_value = None
     user_data = {
         "email": "nonexistent@example.com",
@@ -100,6 +106,7 @@ def test_login_user_not_found(auth_service, mock_db):
         auth_service.login(user_data)
 
 def test_login_invalid_password(auth_service, mock_db):
+    auth_service.SECRET_KEY = secret_key_mock
     email = "login@example.com"
     password = "wrongpassword"
 
@@ -120,6 +127,8 @@ def test_login_invalid_password(auth_service, mock_db):
             auth_service.login(user_data)
 
 def test_create_token(auth_service):
+    auth_service.SECRET_KEY = secret_key_mock
+
     test_data = {"sub": "user_id"}
     expires = timedelta(days=1)
     
@@ -130,6 +139,8 @@ def test_create_token(auth_service):
     assert "exp" in payload
 
 def test_verify_token(auth_service, mock_db):
+    auth_service.SECRET_KEY = secret_key_mock
+
     test_data = {"sub": "66e9a4949ce104f4fabc9730"}
     token = auth_service._create_token(test_data, timedelta(days=1))
 
@@ -143,12 +154,14 @@ def test_verify_token(auth_service, mock_db):
     assert is_valid == True
 
 def test_verify_invalid_token(auth_service):
+    auth_service.SECRET_KEY = secret_key_mock
     invalid_token = "invalid.token.here"
 
     with pytest.raises(ValueError, match="Invalid token"):
         auth_service.verify_token(invalid_token)
 
 def test_token_expiration(auth_service):
+    auth_service.SECRET_KEY = secret_key_mock
     past_data = {"sub": "user_id", "exp": datetime.utcnow() - timedelta(days=1)}
     expired_token = jwt.encode(past_data, secret_key_mock, algorithm="HS256")
 
