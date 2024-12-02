@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import os
-from functools import lru_cache
 from flask import current_app
 from app.models.user import UserModel
 from app.schemas.auth import UserCreateSchema, UserLoginSchema
@@ -17,7 +16,6 @@ class AuthService:
         self.ACCESS_TOKEN_EXPIRE_DAYS = 7
         self.SECRET_KEY = os.getenv("SECRET_KEY")
 
-    @lru_cache(maxsize=32)
     def _get_user_by_id(self, user_id: str):
         return self.db.users.find_one({
             "_id": ObjectId(user_id)

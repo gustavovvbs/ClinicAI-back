@@ -47,8 +47,11 @@ class EmailService:
                     contacts_str = "No contacts available"
                     if contacts and isinstance(contacts, list) and len(contacts) > 0:
                         for contact in contacts:
-                            contacts_str = f"{contact.get('name', 'N/A')} - {contact.get('email', 'N/A')}"
-                            break
+                            if isinstance(contact, dict):
+                                contacts_str = f"{contact.get('name', 'N/A')} - {contact.get('email', 'N/A')}"
+                                break
+                            else:
+                                contacts_str = contact
 
                     study_list_items += f"""
                     <h2>{i+1}. {study.get("Title", "Sem título")}</h2>
