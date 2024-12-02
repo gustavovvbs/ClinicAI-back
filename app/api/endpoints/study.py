@@ -17,10 +17,9 @@ def create_study(data):
     # except Exception as e:
     #     return jsonify({"error": f"internal server error {e}"}), 500
 
-@study_bp.route("/approve/<study_id>", methods=["POST"])
+@study_bp.route("/approve/<study_id>", methods=["PUT"])
 @validate_token
 def approve_study(study_id):
-
     try:
         study_service = StudyService()
         message = study_service.approve_study(study_id)
@@ -42,7 +41,7 @@ def get_studies():
     except Exception as e:
         return jsonify({"error": f"internal server error {e}"}), 500
 
-@study_bp.route("/reject/<study_id>", methods=["POST"])
+@study_bp.route("/reject/<study_id>", methods=["PUT"])
 @validate_token
 def reject_study(study_id):
     try:
