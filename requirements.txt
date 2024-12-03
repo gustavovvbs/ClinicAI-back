@@ -31,3 +31,4 @@ bcrypt
 google
 google-cloud-translate
 openpyxl
+pinecone-client

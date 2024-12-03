@@ -1,9 +1,19 @@
+import os
+from dotenv import load_dotenv
 from typing import Optional, List, Dict, Any
+import pymongo
 import requests
+from pinecone import Pinecone
 from flask import current_app
+from bson import ObjectId
+from langchain_openai import OpenAIEmbeddings
+from langchain_pinecone import PineconeVectorStore
+from langchain_core.documents import Document
 from app.schemas.search import PacienteSearch
 from app.schemas.search import MedicoSearch
 from app.services.translate import TranslateService
+
+load_dotenv()
 
 class SearchService:
     def __init__(self, translate_service = None):
@@ -14,6 +24,16 @@ class SearchService:
         "adult": ("18 years", "64 years"),
         "senior": ("65 years", "200 years")
         }
+        self.embeddings_model = OpenAIEmbeddings(model="text-embedding-3-large")
+        self.db = current_app.mongo 
+        self.collection = self.db.studies
+
+        pc = Pinecone()
+        index_name = "sprint-hsl"
+        index = pc.Index(name = index_name)
+        self.vector_store = PineconeVectorStore(index, embedding=self.embeddings_model)
+
+        self.generate_embeddings_for_existing_documents()
 
     @staticmethod
     def filter_studies(api_response: Dict[str, Any], search_data) -> List[Dict[str, Any]]:
@@ -182,6 +202,69 @@ class SearchService:
 
         return filtered_studies
 
+    def flatten_metadata(self, doc: dict) -> dict:
+        """Flatten nested objects and convert to Pinecone-compatible format"""
+        flattened = {}
+        
+        for key, value in doc.items():
+            if isinstance(value, (str, int, float, bool)):
+                flattened[key] = value
+            elif isinstance(value, list):
+                if all(isinstance(x, str) for x in value):
+                    flattened[key] = value
+                else:
+                    flattened[key] = str(value)
+            else:
+                flattened[key] = str(value)
+                
+        return flattened
+
+    def generate_embeddings_for_existing_documents(self):
+        documents = list(self.collection.find({'embedding': {'$exists': False}}))
+        if not documents:
+            return
+            
+        for doc in documents:
+            doc['_id'] = str(doc['_id'])
+            metadata = self.flatten_metadata(doc)
+            
+            doc = Document(
+                page_content=(
+                    f"{metadata['Title']} {metadata['Description']} "
+                    f"{' '.join(metadata['Conditions'])}"
+                ).strip(),
+                metadata=metadata
+            )
+
+            self.vector_store.add_documents([doc])
+            
+            self.collection.update_one(
+                {"_id": ObjectId(doc.metadata["_id"])},
+                {"$set": {"embedding": True}}
+            )
+
+        return "Generated embeddings for existing documents."
+    def search_by_similarity(self, query_text, location=None, top_k=4):
+        """ 
+        Performs a similarity search on the existing studies embeddings 
+
+        Args: 
+            query_text (str): The text to search for.
+            location (str): The location to filter the results.
+            top_k (int): The number of results to return.
+
+        Returns:
+            list: The top k results from the similarity search.
+        """
+        results = self.vector_store.similarity_search(
+            query_text,
+            k = top_k,
+        )
+
+        results = [doc.metadata for doc in results]
+
+        return results
+
     def search_paciente(
         self,
         search_data: PacienteSearch,
@@ -189,16 +272,30 @@ class SearchService:
         page: str = '1'
     ) -> List[Dict[str, Any]]:
         """ 
-        Searches for studies based on the provided search fields. (only basic fields for the Paciente search)
+        Searches for studies based on the provided search fields and embeddings.
 
         Args:
             search_data (PacienteSearch): The search fields to filter the studies.
-            fields (list): The fields to include in the results.
             page_size (int): The number of results to return per page.
             page (int): The page number to retrieve.
+
         Returns:
-            list: The filtered results from the target page, or an empty list if there are no results for the query.
+            list: The combined results from embedding search and API search.
         """
+        query_text = ''
+        if search_data.condition:
+            query_text = ' '.join(search_data.condition)
+        elif search_data.keywords:
+            query_text = search_data.keywords
+        elif search_data.condition and search_data.keywords:
+            query_text = f"{search_data.condition} {search_data.keywords}"
+
+        embedding_results = self.search_by_similarity(
+            query_text=query_text,
+            location=search_data.location,
+            top_k=page_size
+        )
+
         search_url = self.BASE_URL
         params = {
             "format": "json",
@@ -207,14 +304,13 @@ class SearchService:
 
         data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
 
-        if any(key in data_dict for key in ['age']):
+        if 'age' in data_dict:
             if data_dict["age"] in self.AGE_MAPPING:
                 age_value = data_dict.pop('age')
                 age_range = self.AGE_MAPPING[age_value]
                 age_expr = f"AREA[MaximumAge]RANGE[{age_range[0]}, {age_range[1]}]"
                 params['filter.advanced'] = age_expr
 
-    
         for key, value in data_dict.items():
             alias = search_data.model_fields[key].alias
             if isinstance(value, list):
@@ -224,23 +320,59 @@ class SearchService:
 
         if "query.locn" in params:
             params["query.locn"] = params["query.locn"].split(",")[0].strip()
+
+        target_page = page
         if "page" in params:
             target_page = params.pop("page")
-            return self._paginate_results(
-                search_url=search_url,
-                params=params,
-                target_page=target_page,
-                page_translator = self.translate_service,
-                search_data = data_dict,
-                page_size = page_size
-            )
-        return self._paginate_results(
+
+        api_results = self._paginate_results(
             search_url=search_url,
             params=params,
-            target_page=page,
-            page_translator = self.translate_service,
-            search_data=data_dict
+            target_page=target_page,
+            page_translator=self.translate_service,
+            search_data=data_dict,
+            page_size=page_size
         )
+
+        api_studies = api_results.get("studies", [])
+
+        combined_results = self.combine_results(embedding_results, api_studies)
+
+        response_dict = {
+            "studies": combined_results,
+            "totalPages": api_results.get("totalPages"),
+            "currentPage": api_results.get("currentPage")
+        }
+
+        return response_dict
+
+    def combine_results(self, embedding_results, api_results):
+        """
+        Combine the results from embedding search and API search.
+
+        Args:
+            embedding_results (list): The results from embedding search.
+            api_results (list): The results from API search.
+
+        Returns:
+            list: The combined results without duplicates.
+        """
+        seen_titles = set()
+        combined_results = []
+
+        for study in embedding_results:
+            title = study.get("Title")
+            if title and title not in seen_titles:
+                combined_results.append(study)
+                seen_titles.add(title)
+
+        for study in api_results:
+            title = study.get("Title")
+            if title and title not in seen_titles:
+                combined_results.append(study)
+                seen_titles.add(title)
+
+        return combined_results
 
     def search_medico(
         self, 
@@ -367,7 +499,7 @@ class SearchService:
         search_url: str,
         params: dict, 
         target_page: str,
-        page_translator: None ,
+        page_translator: Optional[TranslateService] = None,
         search_data: dict = None,
         page_size: Optional[int] = 3
     ):
@@ -375,7 +507,7 @@ class SearchService:
         Paginates through the API page results until the target page is reached.
         Args:
             search_url (str): The URL of the API endpoint to search.
-            params (dict): The query parameters to include in the ct api request. (not exatcly the same as the search_data, cause it masks the fields into query syntax)
+            params (dict): The query parameters to include in the ct api request. (not exactly the same as the search_data, cause it masks the fields into query syntax)
             target_page (int): The page number to retrieve.
             page_translator (None): An optional translator to apply to the results.
             search_data (dict): The search data to filter the results.

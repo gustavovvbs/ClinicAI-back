@@ -38,9 +38,9 @@ class StudyService:
         """
         study = self.db.studies.find_one({"_id": ObjectId(study_id)})
         if not study:
-            return "Study not found"
+            return ValueError("Study not found")
         if study.get("sub_status") == "accepted":
-            return "Study already accepted"
+            raise ValueError("Study already approved")
 
         self.db.studies.update_one(
             {"_id": ObjectId(study_id)},
@@ -61,9 +61,9 @@ class StudyService:
         """
         study = self.db.studies.find_one({"_id": ObjectId(study_id)})
         if not study:
-            return "Study not found"
+            return ValueError("Study not found")
         if study.get("sub_status") == "rejected":
-            return "Study already rejected"
+            raise ValueError("Study already rejected")
 
         self.db.studies.update_one(
             {"_id": ObjectId(study_id)},
