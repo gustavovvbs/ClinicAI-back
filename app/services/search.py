@@ -222,7 +222,9 @@ class SearchService:
     def generate_embeddings_for_existing_documents(self):
         documents = list(self.collection.find({'embedding': {'$exists': False}}))
         if not documents:
-            return
+            documents = list(self.collection.find({'embedding': False}))
+            if not documents:
+                return 
             
         for doc in documents:
             doc['_id'] = str(doc['_id'])
@@ -236,7 +238,9 @@ class SearchService:
                 metadata=metadata
             )
 
-            self.vector_store.add_documents([doc])
+            _id = [str(doc.metadata["_id"])]
+
+            self.vector_store.add_documents([doc], ids=_id)
             
             self.collection.update_one(
                 {"_id": ObjectId(doc.metadata["_id"])},
@@ -244,7 +248,8 @@ class SearchService:
             )
 
         return "Generated embeddings for existing documents."
-    def search_by_similarity(self, query_text, location=None, top_k=4):
+
+    def search_by_similarity(self, query_text, location=None, top_k=4, similarity_threshold=0.2):
         """ 
         Performs a similarity search on the existing studies embeddings 
 
@@ -252,18 +257,23 @@ class SearchService:
             query_text (str): The text to search for.
             location (str): The location to filter the results.
             top_k (int): The number of results to return.
+            similarity_threshold (float): The minimum similarity score to consider a result. (it is still a bit arbitrary, there is room for experimentation here)
 
         Returns:
             list: The top k results from the similarity search.
         """
-        results = self.vector_store.similarity_search(
+        results = self.vector_store.similarity_search_with_score(
             query_text,
             k = top_k,
+            filter={"sub_status": "accepted"}
         )
 
-        results = [doc.metadata for doc in results]
+        filtered_results = []
+        for result, score in results:
+            if score > similarity_threshold:
+                filtered_results.append(result.metadata)
 
-        return results
+        return filtered_results
 
     def search_paciente(
         self,

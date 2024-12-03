@@ -40,8 +40,8 @@ def approve_study(study_id):
         message = study_service.approve_study(study_id)
         return jsonify({"message": message}), 200
 
-    except ValueError:
-        return jsonify({"error": "Study already approved or	not found"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"Study already approved or not found {e}"}), 400
     except Exception as e:
         return jsonify({"error": f"internal server error {e}"}), 500
 
