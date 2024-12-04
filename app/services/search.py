@@ -271,7 +271,7 @@ class SearchService:
         filtered_results = []
         for result, score in results:
             if score > similarity_threshold:
-                result.metadata.Location = json.dumps(result.metadata.Location)
+                result.metadata["Location"] = json.dumps(result.metadata["Location"])
                 filtered_results.append(result.metadata)
 
         return filtered_results
