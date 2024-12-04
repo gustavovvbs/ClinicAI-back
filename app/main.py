@@ -7,7 +7,7 @@ from app.api.endpoints.user import user_bp
 from app.api.endpoints.search import search_bp
 from app.api.endpoints.study import study_bp
 from app.api.endpoints.excel import excel_bp
-# from app.api.endpoints.chatbot import chatbot_bp
+from app.api.endpoints.chatbot import chatbot_bp
 
 from flask_cors import CORS
 
@@ -20,7 +20,7 @@ def create_app():
     app.register_blueprint(search_bp, url_prefix = '/search')
     app.register_blueprint(email_bp, url_prefix='/email')
     app.register_blueprint(study_bp, url_prefix='/study')
-    # app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
+    app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
     app.register_blueprint(excel_bp, url_prefix='/excel')
 
 

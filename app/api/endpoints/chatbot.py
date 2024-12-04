@@ -9,11 +9,11 @@ chatbot_bp = Blueprint('chatbot', __name__)
 @chatbot_bp.route('/workflow', methods = ['POST'])
 @validate_json(GraphState)
 def run_workflow(data: GraphState):
-    # try:
+    try:
         compiled_workflow = workflow.compiled_workflow
         result = compiled_workflow.invoke(data)
         result = result.model_dump()
         return jsonify(result), 200
-    # except Exception as e:
-    #     current_app.logger.error(f'Error running workflow: {e}')
-    #     return jsonify({'error': f'error running workflow, {e}'}), 500
+    except Exception as e:
+        current_app.logger.error(f'Error running workflow: {e}')
+        return jsonify({'error': f'error running workflow, {e}'}), 500
