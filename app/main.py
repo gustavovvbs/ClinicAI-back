@@ -21,7 +21,7 @@ def create_app():
     app.register_blueprint(email_bp, url_prefix='/email')
     app.register_blueprint(study_bp, url_prefix='/study')
     app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
-    app.register_blueprint(excel_bp, url_prefix='/ ')
+    app.register_blueprint(excel_bp, url_prefix='/excel')
 
 
     logging.basicConfig(level=logging.ERROR)
