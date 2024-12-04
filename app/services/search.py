@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from typing import Optional, List, Dict, Any
 import pymongo
@@ -210,10 +211,9 @@ class SearchService:
             if isinstance(value, (str, int, float, bool)):
                 flattened[key] = value
             elif isinstance(value, list):
-                if all(isinstance(x, str) for x in value):
-                    flattened[key] = value
-                else:
-                    flattened[key] = str(value)
+                flattened[key] = json.dumps(value)
+            elif isinstance(value, dict):
+                flattened[key] = json.dumps(value)
             else:
                 flattened[key] = str(value)
                 
@@ -271,6 +271,7 @@ class SearchService:
         filtered_results = []
         for result, score in results:
             if score > similarity_threshold:
+                result.metadata.Location = json.dumps(result.metadata.Location)
                 filtered_results.append(result.metadata)
 
         return filtered_results

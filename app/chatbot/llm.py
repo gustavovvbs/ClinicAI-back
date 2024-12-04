@@ -146,6 +146,8 @@ def awnser_with_results(results: list[StudyType]) -> str:
         Sua tarefa é informar esses dados ao usuário, mencionando o título de cada estudo, a condição a localização a organização e contatos, se houver.
 
         Formate a resposta de forma organizada, em formato markdown, mantendo as informações mostradas de forma clara e objetiva usando as ferramentas do markdown.
+
+        Não inclua formatação de linguagem, como ````markdown, ou ```json, apenas formate os dados de forma clara e objetiva.
         """ 
     
     awnser_prompt = ChatPromptTemplate.from_messages(
