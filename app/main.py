@@ -26,7 +26,6 @@ def create_app():
     app.register_blueprint(study_bp, url_prefix='/study')
     app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
     app.register_blueprint(pdf_bp, url_prefix='/pdf')
-    app.register_blueprint(excel_bp, url_prefix="/")
     app.register_blueprint(excel_bp, url_prefix='/excel')
     app.register_blueprint(data_analysis_bp, url_prefix='/data')
     app.register_blueprint(scheduler_bp)
