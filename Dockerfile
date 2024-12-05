@@ -15,4 +15,4 @@ COPY . .
 
 EXPOSE 80
 
-CMD exec gunicorn app.main:app -b 0.0.0.0 --timeout 60
+CMD exec gunicorn app.main:app -b 0.0.0.0:80 --timeout 60
