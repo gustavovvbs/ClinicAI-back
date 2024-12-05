@@ -1,4 +1,5 @@
 import os
+import json
 from dotenv import load_dotenv
 from typing import Optional, List, Dict, Any
 import pymongo
@@ -210,10 +211,9 @@ class SearchService:
             if isinstance(value, (str, int, float, bool)):
                 flattened[key] = value
             elif isinstance(value, list):
-                if all(isinstance(x, str) for x in value):
-                    flattened[key] = value
-                else:
-                    flattened[key] = str(value)
+                flattened[key] = json.dumps(value)
+            elif isinstance(value, dict):
+                flattened[key] = json.dumps(value)
             else:
                 flattened[key] = str(value)
                 
@@ -271,6 +271,7 @@ class SearchService:
         filtered_results = []
         for result, score in results:
             if score > similarity_threshold:
+                result.metadata["Location"] = json.dumps(result.metadata["Location"])
                 filtered_results.append(result.metadata)
 
         return filtered_results
@@ -400,6 +401,20 @@ class SearchService:
         Returns:
             list: The filtered results from the target page, or an empty list if there are no results for the query.
         """
+        query_text = ''
+        if search_data.condition:
+            query_text = ' '.join(search_data.condition)
+        elif search_data.keywords:
+            query_text = search_data.keywords
+        elif search_data.condition and search_data.keywords:
+            query_text = f"{search_data.condition} {search_data.keywords}"
+
+        embedding_results = self.search_by_similarity(
+            query_text=query_text,
+            location=search_data.location,
+            top_k=page_size
+        )
+
         search_url = self.BASE_URL
 
         params = {
@@ -439,13 +454,24 @@ class SearchService:
                 page_size = page_size
             )
 
-        return self._paginate_results(
+        paginated_results = self._paginate_results(
             search_url=search_url,
             params=params,
-            target_page = page,
+            target_page=page,
             page_translator = self.translate_service,
-            search_data = data_dict
+            search_data = data_dict,
         )
+
+        api_studies = paginated_results.get("studies", [])
+        combined_results = self.combine_results(embedding_results, api_studies)
+
+        response_dict = {
+            "studies": combined_results,
+            "totalPages": paginated_results.get("totalPages"),
+            "currentPage": paginated_results.get("currentPage")
+        }
+
+        return response_dict
 
     def advanced_search(
         self,

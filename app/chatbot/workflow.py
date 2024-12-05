@@ -10,7 +10,6 @@ def workflow(state: GraphState) -> GraphState:
         if state.has_doenca:
             condition = llm.schema_message(state.user_message)
             state.studies_list = tool.api_tool(condition)
-            
             response = llm.awnser_with_results(state.studies_list)
             state.chat_history.append(Message(text=response, sender="ai"))
         else:
