@@ -8,8 +8,10 @@ from app.api.endpoints.search import search_bp
 from app.api.endpoints.study import study_bp
 from app.api.endpoints.excel import excel_bp
 from app.api.endpoints.chatbot import chatbot_bp
+from app.api.endpoints.pdf import pdf_bp
 from app.api.endpoints.scheduler import scheduler_bp
 from app.api.endpoints.data_analysis import data_analysis_bp
+
 
 from flask_cors import CORS
 
@@ -23,10 +25,11 @@ def create_app():
     app.register_blueprint(email_bp, url_prefix='/email')
     app.register_blueprint(study_bp, url_prefix='/study')
     app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
+    app.register_blueprint(pdf_bp, url_prefix='/pdf')
+    app.register_blueprint(excel_bp, url_prefix="/")
     app.register_blueprint(excel_bp, url_prefix='/excel')
     app.register_blueprint(data_analysis_bp, url_prefix='/data')
     app.register_blueprint(scheduler_bp)
-
 
 
     logging.basicConfig(level=logging.ERROR)

@@ -32,3 +32,4 @@ google
 google-cloud-translate
 openpyxl
 pinecone-client
+reportlab
