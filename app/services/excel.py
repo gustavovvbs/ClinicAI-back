@@ -1,32 +1,17 @@
-import pandas as pd 
-from io import StringIO 
+import pandas as pd
 from io import BytesIO
-from http.client import HTTPException
 
 
 class ExcelService:
-    def __init__(self):
-        self.BASE_URL = "https://clinicaltrials.gov/api/v2/studies"
-
-    def get_excel(self, 
-        data: list[dict]
-    ):
+    def get_excel(self, data: dict) -> bytes:
         try:
-            df = pd.json_normalize(data["studies"], max_level=1)
+            # Normaliza os dados em um DataFrame
+            df = pd.json_normalize(data.get("studies", []), max_level=1)
+
+            # Gera o Excel em um buffer
             with BytesIO() as excel_buffer:
                 df.to_excel(excel_buffer, index=False, sheet_name="Estudos Clínicos")
                 excel_buffer.seek(0)
                 return excel_buffer.getvalue()
         except Exception as e:
-            raise HTTPException(f"Error generating excel: {e}")
-
-    # def _hardcoded_column_filter(self,
-    #     df: pd.DataFrame)
-    # -> pd.DataFrame:
-
-    #     columns = [
-
-    #     ]        
-
-
-
+            raise RuntimeError(f"Erro ao gerar o Excel: {e}")
