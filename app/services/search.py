@@ -315,6 +315,8 @@ class SearchService:
 
         data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
 
+        data_dict = self.translate_service.translate_fields(data_dict, target_language='en', desired_fields=["condition", "keywords"])
+
         if 'age' in data_dict:
             if data_dict["age"] in self.AGE_MAPPING:
                 age_value = data_dict.pop('age')
@@ -424,6 +426,9 @@ class SearchService:
 
        
         data_dict = search_data.model_dump(exclude_none=True, exclude_unset=True)
+
+        data_dict = self.translate_service.translate_fields(data_dict, target_language='en', desired_fields=["condition", "keywords"])
+
     
         agg_filters = self._construct_agg_filters(data_dict)
         if agg_filters:
