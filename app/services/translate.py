@@ -18,7 +18,7 @@ class TranslateService:
         else:
             self.translator = translate.Client()
 
-    def translate_fields(self, data, target_language='pt', desired_fields=["Title", "Description", "Keywords"]):
+    def translate_fields(self, data, target_language='pt', desired_fields=["Title", "Description", "Keywords", "Restrictions"]):
         """ 
         Recursively Translate the desired fields of a JSON object to the target language.
 
