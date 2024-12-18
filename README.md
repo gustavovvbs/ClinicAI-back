@@ -1,12 +1,6 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/OxqeFv_o)
-
 # Sistema de Busca de Estudos Clínicos - Hospital Sírio-Libanês
 
 Este projeto é um sistema backend em Python destinado à busca e gerenciamento de estudos clínicos, integrando dados do [ClinicalTrials.gov](https://clinicaltrials.gov/) com recursos avançados de busca, análise, chatbot e tradução. O objetivo é facilitar a recuperação, compreensão e análise de dados sobre ensaios clínicos, fornecendo uma API robusta e escalável.
-
-OBS: Para acessar o dashboard de ADMIN, use:
-email: gustavo@gmail.com
-senha: teste
 
 ## 📋 Índice
 - [Sistema de Busca de Estudos Clínicos - Hospital Sírio-Libanês](#sistema-de-busca-de-estudos-clínicos---hospital-sírio-libanês)
